@@ -6,7 +6,8 @@ UserSchema.add({
     name: {
         type: String,
         required: true
-    }})
+    }
+  });
 UserSchema
 .virtual('name')
 .get(function () {
