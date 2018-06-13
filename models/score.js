@@ -1,6 +1,5 @@
 var mongoose = require('mongoose');
 
-// hello
 var Schema = mongoose.Schema;
 
 var ScoreSchema = new Schema();
