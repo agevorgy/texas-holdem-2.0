@@ -43,7 +43,8 @@ app.post('/api/create-session', function(req, res) {
   var users = [];
   
   users.push({
-    name: name
+    name: name,
+    kind: 'Participant'
   })
 
   var newSession = new Session ({
@@ -60,8 +61,9 @@ app.post('/api/create-session', function(req, res) {
     console.log('Saved');
   })
 }) 
+
 app.put('/api/join-session',function(req, res) { 
-  console.log('joining session');
+  console.log('joining session...');
   var sessionID = req.body._id;
   var userType = req.body.kind;
   var name = req.body.name;
@@ -74,19 +76,13 @@ app.put('/api/join-session',function(req, res) {
     });
 
     sessions.save(function(err) {
-      console.log(`Saving new session...`)
-      //if (err) throw err;
+      console.log(`Adding user to session...`)
+      if (err) throw err;
 
-      
-      sessions.users.find({name : name}, function(err, user) {
-        return res.json({_id: user._id});
-      })
-      
-      //return res.send(sessions.users._id);
-      console.log('Saved');
+      return res.json({_id: sessions.users[sessions.users.length - 1]});
+      console.log('User joined session');
     });
   })
-
 })
 
 
