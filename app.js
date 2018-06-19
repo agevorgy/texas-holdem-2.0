@@ -27,10 +27,21 @@ db.on('error', console.error.bind(console, 'connection error:'));
 db.once('open', function() {
   console.log('we are connected!');
 });
+
+app.get('/getUsers', function(req, res) {
+  Session.find({}, function(err, sessions) {
+    if (err) throw err;
+
+    return res.send(sessions);
+  })
+})
+
 app.post('/api/create-session', function(req, res) { 
+  console.log("Creating session..");
   var name = req.body.name;
   
   var users = [];
+  
   users.push({
     name: name
   })
@@ -38,12 +49,15 @@ app.post('/api/create-session', function(req, res) {
   var newSession = new Session ({
       users: users
   })
+
+  console.log(`New session object created: ${newSession}`)
   
   newSession.save(function(err) {
+    console.log(`Saving new session...`)
     if (err) throw err;
 
     return res.send(newSession._id);
-    console.log( "added");
+    console.log('Saved');
   })
 }) 
 

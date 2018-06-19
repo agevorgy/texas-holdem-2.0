@@ -1,5 +1,11 @@
 var mongoose = require('mongoose');
 
+/* 
+var scoreSchema = new mongoose.Schema({ 
+    
+})
+*/
+
 var userSchema = new mongoose.Schema({
     name: {
         type: String,
