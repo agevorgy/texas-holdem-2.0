@@ -12,8 +12,12 @@ var userSchema = new mongoose.Schema({
         required: true
     },
     score: {
-      type: String,
-      enum: ['1', '2', '3', '5', '8', '13', '?']
+        type: String,
+        enum: ['1', '2', '3', '5', '8', '13', '?']
+    },
+    kind: {
+        type: String,
+        enum: ['Participant', 'Observer']
     }
 })
 
