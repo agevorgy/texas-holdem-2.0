@@ -5,16 +5,17 @@ var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
 var logger = require('morgan');
 var mongoose = require('mongoose');
-require('./models/users');
+//require('./models/users');
+require('./models/session');
 
 // var indexRouter = require('./routes/index');
 // var usersRouter = require('./routes/users');
 
-const users = mongoose.model('user');
+//const Users = mongoose.model('User');
+const Session = mongoose.model('Session');
 
 var app = express();
 var port = process.env.PORT || 3005;
-
 
 mongoose.connect(process.env.MONGODB, {
 });
@@ -59,5 +60,28 @@ app.use(function(err, req, res, next) {
   res.status(err.status || 500);
   //res.json('error');
 });
+
+app.post('/api/create-session', function(req, res) { 
+  var name = req.body.name;
+  var sessionID = Math.floor(Math.random() * 128);
+  var userID = Math.floor(Math.random() * sessionID);
+  
+  var users = [];
+  users.push({
+    userID : userID,
+    name: name
+  })
+
+  var newSession = new Session ({
+      sessionID: sessionID,
+      users: users
+  })
+  
+  newSession.save(function(err) {
+    if (err) throw err;
+
+    return sessionID;
+  })
+}) 
 
 module.exports = app;
