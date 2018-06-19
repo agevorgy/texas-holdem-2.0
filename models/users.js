@@ -7,6 +7,10 @@ UserSchema.add({
         type: String,
         required: true,
     },
+    _id: {
+      type: String,
+      //'default': shortid.generate
+    },
     score: {
       type: String,
       required: true,

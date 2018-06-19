@@ -5,6 +5,7 @@ var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
 var logger = require('morgan');
 var mongoose = require('mongoose');
+var shortid = require('shortid');
 //require('./models/users');
 require('./models/session');
 
@@ -14,19 +15,37 @@ const Session = mongoose.model('Session');
 var app = express();
 var port = process.env.PORT || 3005;
 
-mongoose.connect(process.env.MONGODB, {
-});
-mongoose.connection.on('error', function() {
-  console.log('MongoDB Connection Error. Please make sure that MongoDB is running.');
-  process.exit(1);
-});
-
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
-
-
 app.get('/', (req, res) => res.status(200).send('Hello world!'));
 app.set('view engine', 'html');
+
+
+mongoose.connect('mongodb://localhost:27017/test');
+var db = mongoose.connection;
+db.on('error', console.error.bind(console, 'connection error:'));
+db.once('open', function() {
+  console.log('we are connected!');
+});
+app.post('/api/create-session', function(req, res) { 
+  var name = req.body.name;
+  
+  var users = [];
+  users.push({
+    name: name
+  })
+
+  var newSession = new Session ({
+      users: users
+  })
+  
+  newSession.save(function(err) {
+    if (err) throw err;
+
+    return res.send(newSession._id);
+    console.log( "added");
+  })
+}) 
 
 
 // catch 404 and forward to error handler
@@ -47,27 +66,5 @@ app.use(function(err, req, res, next) {
   //res.json('error');
 });
 
-app.post('/api/create-session', function(req, res) { 
-  var name = req.body.name;
-  var sessionID = Math.floor(Math.random() * 128);
-  var userID = Math.floor(Math.random() * sessionID);
-  
-  var users = [];
-  users.push({
-    userID : userID,
-    name: name
-  })
-
-  var newSession = new Session ({
-      sessionID: sessionID,
-      users: users
-  })
-  
-  newSession.save(function(err) {
-    if (err) throw err;
-
-    return sessionID;
-  })
-}) 
 
 module.exports = app;
