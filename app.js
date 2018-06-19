@@ -79,8 +79,7 @@ app.put('/api/join-session',function(req, res) {
       console.log(`Adding user to session...`)
       if (err) throw err;
 
-      return res.json({_id: sessions.users[sessions.users.length - 1]});
-      console.log('User joined session');
+      return res.json({_id: sessions.users[sessions.users.length - 1]._id});
     });
   })
 })
