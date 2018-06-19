@@ -56,10 +56,39 @@ app.post('/api/create-session', function(req, res) {
     console.log(`Saving new session...`)
     if (err) throw err;
 
-    return res.send(newSession._id);
+    return res.json({_id: newSession._id});
     console.log('Saved');
   })
 }) 
+app.put('/api/join-session',function(req, res) { 
+  console.log('joining session');
+  var sessionID = req.body._id;
+  var userType = req.body.kind;
+  var name = req.body.name;
+
+  Session.findOne({_id: sessionID}, function(err, sessions) {
+    if (err) throw err;
+    sessions.users.push({
+      name: name,
+      kind: userType
+    });
+
+    sessions.save(function(err) {
+      console.log(`Saving new session...`)
+      //if (err) throw err;
+
+      
+      sessions.users.find({name : name}, function(err, user) {
+        return res.json({_id: user._id});
+      })
+      
+      //return res.send(sessions.users._id);
+      console.log('Saved');
+    });
+  })
+
+})
+
 
 
 // catch 404 and forward to error handler
