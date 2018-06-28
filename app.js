@@ -1,15 +1,11 @@
 require('dotenv').config();
 var express = require('express');
 var path = require('path');
-var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
-var logger = require('morgan');
 var mongoose = require('mongoose');
-var shortid = require('shortid');
-//require('./models/users');
+var cors = require('cors');
 require('./models/session');
 
-//const Users = mongoose.model('User');
 const Session = mongoose.model('Session');
 
 var app = express();
@@ -17,9 +13,19 @@ var port = process.env.PORT || 3005;
 
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
+app.use(cors())
+
+app.use((req, res, next) => {
+  if (req.method === 'OPTIONS') {
+    res.send(200);
+  }
+  else {
+    next();
+  }
+});
+
 app.get('/', (req, res) => res.status(200).send('Hello world!'));
 app.set('view engine', 'html');
-
 
 mongoose.connect('mongodb://localhost:27017/test');
 var db = mongoose.connection;
@@ -30,68 +36,86 @@ db.once('open', function() {
 
 app.get('/getUsers', function(req, res) {
   Session.find({}, function(err, sessions) {
-    if (err) throw err;
+    if (err) console.log(`Error getting users: ${err}`);;
 
     return res.send(sessions);
   })
 })
 
+// Returns session ID and user ID (client wants both)
 app.post('/api/create-session', function(req, res) { 
-  console.log("Creating session..");
   var name = req.body.name;
   
   var users = [];
   
   users.push({
-    name: name,
-    kind: 'Participant'
+    name: name
   })
 
   var newSession = new Session ({
       users: users
   })
-
-  console.log(`New session object created: ${newSession}`)
   
   newSession.save(function(err) {
-    console.log(`Saving new session...`)
-    if (err) throw err;
+    if (err) console.log(`Error creating new session: ${err}`);
 
-    return res.json({_id: newSession._id});
-    console.log('Saved');
+    return res.json({
+      _sessionId: newSession._id,
+      _userId: newSession.users[0]._id});
   })
 }) 
 
-app.put('/api/join-session',function(req, res) { 
-  console.log('joining session...');
-  var sessionID = req.body._id;
-  var userType = req.body.kind;
+// Returns positive int if user exists
+function userExists(userArray, id) {
+  for (var i = 0; i < userArray.length; i++) {
+    if (userArray[i]._id == id) {
+      return i;
+    }
+  }
+  return -1;
+}
+
+app.put('/api/join-session/:id', function(req, res) { 
+  var sessionId = req.params.id;
+  var userRole = req.body.role;
   var name = req.body.name;
+  var userId = req.body.userId;
 
-  Session.findOne({_id: sessionID}, function(err, sessions) {
+  Session.findOne({_id: sessionId}, function(err, sessions) {
     if (err) throw err;
-    sessions.users.push({
-      name: name,
-      kind: userType
-    });
 
-    sessions.save(function(err) {
-      console.log(`Adding user to session...`)
-      if (err) throw err;
+    // if user Id exists already, just update user role (moderator)
+    if ((i = userExists(sessions.users, userId)) != -1) {
+      
+      sessions.users[i].role = userRole;
 
-      return res.json({_id: sessions.users[sessions.users.length - 1]._id});
-    });
+      sessions.save(function (err) {
+        if (err) console.log(`Error updating user role: ${err}`);
+
+        return res.json({_userId: userId});
+      })
+  
+    } else {
+      sessions.users.push({
+        name: name,
+        role: userRole
+      });
+
+      sessions.save(function(err) {
+        if (err) console.log(`Error adding user to session: ${err}`);
+
+        return res.json({_userId: sessions.users[sessions.users.length - 1]._id});
+      });
+    }
   })
 })
-
-
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
   next(createError(404));
 });
 
-app.listen(port, () => console.log(`listening on port ${port}`));
+//app.listen(port, () => console.log(`listening on port ${port}`));
 
 // error handler
 app.use(function(err, req, res, next) {

@@ -1,6 +1,7 @@
 var mongoose = require('mongoose');
 
 /* 
+to choose fibonacci # or regular #s
 var scoreSchema = new mongoose.Schema({ 
     
 })
@@ -15,7 +16,7 @@ var userSchema = new mongoose.Schema({
         type: String,
         enum: ['1', '2', '3', '5', '8', '13', '?']
     },
-    kind: {
+    role: {
         type: String,
         enum: ['Participant', 'Observer']
     }
