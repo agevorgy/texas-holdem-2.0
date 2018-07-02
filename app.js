@@ -4,7 +4,7 @@ var path = require('path');
 var bodyParser = require('body-parser');
 var mongoose = require('mongoose');
 var cors = require('cors');
-var shortid = require('shortid')
+var shortid = require('shortid');
 require('./models/session');
 
 const Session = mongoose.model('Session');
@@ -38,10 +38,10 @@ db.once('open', function() {
 
 app.get('/getUsers', function(req, res) {
   Session.find({}, function(err, sessions) {
-    if (err) console.log(`Error getting users: ${err}`);;
+    if (err) console.log(`Error getting users: ${err}`);
 
     return res.send(sessions);
-  })
+  });
 })
 
 // Returns session ID and user ID (client wants both)
