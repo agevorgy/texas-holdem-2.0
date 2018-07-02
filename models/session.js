@@ -1,20 +1,17 @@
 var mongoose = require('mongoose');
-
-/* 
-to choose fibonacci # or regular #s
-var scoreSchema = new mongoose.Schema({ 
-    
-})
-*/
+var shortid = require('shortid');
 
 var userSchema = new mongoose.Schema({
+    id: {
+        type: String
+    },
     name: {
         type: String,
         required: true
     },
     score: {
         type: String,
-        enum: ['1', '2', '3', '5', '8', '13', '?']
+        enum: ['', '1', '2', '3', '5', '8', '13', '?']
     },
     role: {
         type: String,
@@ -23,6 +20,10 @@ var userSchema = new mongoose.Schema({
 })
 
 var sessionSchema = new mongoose.Schema({
+    id: {
+        type: String,
+        'default': shortid.generate
+    },
     users: [userSchema]
 })
 

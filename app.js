@@ -4,12 +4,14 @@ var path = require('path');
 var bodyParser = require('body-parser');
 var mongoose = require('mongoose');
 var cors = require('cors');
+var shortid = require('shortid')
 require('./models/session');
 
 const Session = mongoose.model('Session');
 
 var app = express();
 var port = process.env.PORT || 3005;
+var database = process.env.DATABASE;
 
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
@@ -27,11 +29,11 @@ app.use((req, res, next) => {
 app.get('/', (req, res) => res.status(200).send('Hello world!'));
 app.set('view engine', 'html');
 
-mongoose.connect('mongodb://localhost:27017/test');
+mongoose.connect(database);
 var db = mongoose.connection;
 db.on('error', console.error.bind(console, 'connection error:'));
 db.once('open', function() {
-  console.log('we are connected!');
+  console.log('we are connected to mongoDB!');
 });
 
 app.get('/getUsers', function(req, res) {
@@ -45,11 +47,13 @@ app.get('/getUsers', function(req, res) {
 // Returns session ID and user ID (client wants both)
 app.post('/api/create-session', function(req, res) { 
   var name = req.body.name;
+  var userId = shortid.generate()
   
   var users = [];
   
   users.push({
-    name: name
+    name: name,
+    id: userId
   })
 
   var newSession = new Session ({
@@ -60,15 +64,15 @@ app.post('/api/create-session', function(req, res) {
     if (err) console.log(`Error creating new session: ${err}`);
 
     return res.json({
-      _sessionId: newSession._id,
-      _userId: newSession.users[0]._id});
+      _sessionId: newSession.id,
+      _userId: userId});
   })
 }) 
 
 // Returns positive int if user exists
 function userExists(userArray, id) {
   for (var i = 0; i < userArray.length; i++) {
-    if (userArray[i]._id == id) {
+    if (userArray[i].id == id) {
       return i;
     }
   }
@@ -81,7 +85,7 @@ app.put('/api/join-session/:id', function(req, res) {
   var name = req.body.name;
   var userId = req.body.userId;
 
-  Session.findOne({_id: sessionId}, function(err, sessions) {
+  Session.findOne({id: sessionId}, function(err, sessions) {
     if (err) throw err;
 
     // if user Id exists already, just update user role (moderator)
@@ -96,7 +100,10 @@ app.put('/api/join-session/:id', function(req, res) {
       })
   
     } else {
+      userId = shortid.generate()
+
       sessions.users.push({
+        id: userId,
         name: name,
         role: userRole
       });
@@ -104,7 +111,7 @@ app.put('/api/join-session/:id', function(req, res) {
       sessions.save(function(err) {
         if (err) console.log(`Error adding user to session: ${err}`);
 
-        return res.json({_userId: sessions.users[sessions.users.length - 1]._id});
+        return res.json({_userId: userId});
       });
     }
   })
@@ -115,8 +122,6 @@ app.use(function(req, res, next) {
   next(createError(404));
 });
 
-//app.listen(port, () => console.log(`listening on port ${port}`));
-
 // error handler
 app.use(function(err, req, res, next) {
   // set locals, only providing error in development
@@ -125,7 +130,6 @@ app.use(function(err, req, res, next) {
 
   // render the error page
   res.status(err.status || 500);
-  //res.json('error');
 });
 
 
