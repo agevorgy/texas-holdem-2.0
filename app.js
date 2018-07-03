@@ -38,7 +38,7 @@ db.once('open', function () {
 
 app.get('/getUsers', function (req, res) {
   Session.find({}, function (err, sessions) {
-    if (err) console.error();
+    if (err) console.error(`Error getting users: ${err}`);
 
     return res.send(sessions);
   });
@@ -52,7 +52,7 @@ app.post('/api/create-session', function (req, res) {
   })
 
   newUser.save(function (err) {
-    if (err) console.error();
+    if (err) console.error(`Error creating new user: ${err}`);
   })
 
   var users = [];
@@ -63,7 +63,7 @@ app.post('/api/create-session', function (req, res) {
   })
 
   newSession.save(function (err) {
-    if (err) console.error();
+    if (err) console.error(`Error creating new session: ${err}`);
 
     return res.json({
       _sessionId: newSession.id,
@@ -100,7 +100,7 @@ app.put('/api/join-session/:id', function (req, res) {
         users[i].role = userRole;
 
         users[i].save(function (err) {
-          if (err) console.error();
+          if (err) console.error(`Error updating user role: ${err}`);
 
           return res.json({ _userId: userId })
         })
@@ -113,13 +113,13 @@ app.put('/api/join-session/:id', function (req, res) {
         })
 
         newUser.save(function (err) {
-          if (err) console.error();
+          if (err) console.error(`Error adding new user: ${err}`);
         })
 
         sessions.users.push(newUser);
 
         sessions.save(function (err) {
-          if (err) console.error();
+          if (err) console.error(`Error adding new user to session: ${err}`);
 
           return res.json({ _userId: newUser._id });
         });
