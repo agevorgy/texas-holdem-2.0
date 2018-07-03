@@ -4,10 +4,10 @@ var path = require('path');
 var bodyParser = require('body-parser');
 var mongoose = require('mongoose');
 var cors = require('cors');
-var shortid = require('shortid');
-require('./models/session');
+require('./models/schemas');
 
 const Session = mongoose.model('Session');
+const User = mongoose.model('User');
 
 var app = express();
 var port = process.env.PORT || 3005;
@@ -32,42 +32,45 @@ app.set('view engine', 'html');
 mongoose.connect(database);
 var db = mongoose.connection;
 db.on('error', console.error.bind(console, 'connection error:'));
-db.once('open', function() {
+db.once('open', function () {
   console.log('we are connected to mongoDB!');
 });
 
-app.get('/getUsers', function(req, res) {
-  Session.find({}, function(err, sessions) {
-    if (err) console.log(`Error getting users: ${err}`);
+app.get('/getUsers', function (req, res) {
+  Session.find({}, function (err, sessions) {
+    if (err) console.error();
 
     return res.send(sessions);
   });
 })
 
 // Returns session ID and user ID (client wants both)
-app.post('/api/create-session', function(req, res) { 
-  var name = req.body.name;
-  var userId = shortid.generate()
-  
-  var users = [];
-  
-  users.push({
-    name: name,
-    id: userId
+app.post('/api/create-session', function (req, res) {
+
+  var newUser = new User({
+    name: req.body.name
   })
 
-  var newSession = new Session ({
-      users: users
+  newUser.save(function (err) {
+    if (err) console.error();
   })
-  
-  newSession.save(function(err) {
-    if (err) console.log(`Error creating new session: ${err}`);
+
+  var users = [];
+  users.push(newUser);
+
+  var newSession = new Session({
+    users: users
+  })
+
+  newSession.save(function (err) {
+    if (err) console.error();
 
     return res.json({
       _sessionId: newSession.id,
-      _userId: userId});
+      _userId: newUser._id
+    });
   })
-}) 
+})
 
 // Returns positive int if user exists
 function userExists(userArray, id) {
@@ -79,51 +82,59 @@ function userExists(userArray, id) {
   return -1;
 }
 
-app.put('/api/join-session/:id', function(req, res) { 
+app.put('/api/join-session/:id', function (req, res) {
   var sessionId = req.params.id;
   var userRole = req.body.role;
   var name = req.body.name;
   var userId = req.body.userId;
 
-  Session.findOne({id: sessionId}, function(err, sessions) {
-    if (err) throw err;
+  Session.findOne({ id: sessionId }, function (err, sessions) {
+    if (err) console.error();
 
-    // if user Id exists already, just update user role (moderator)
-    if ((i = userExists(sessions.users, userId)) != -1) {
-      
-      sessions.users[i].role = userRole;
+    User.find({}, function (err, users) {
+      if (err) console.error();
 
-      sessions.save(function (err) {
-        if (err) console.log(`Error updating user role: ${err}`);
+      // if user Id exists already (moderator), just update user role
+      if ((i = userExists(users, userId)) != -1) {
 
-        return res.json({_userId: userId});
-      })
-  
-    } else {
-      userId = shortid.generate()
+        users[i].role = userRole;
 
-      sessions.users.push({
-        id: userId,
-        name: name,
-        role: userRole
-      });
+        users[i].save(function (err) {
+          if (err) console.error();
 
-      sessions.save(function(err) {
-        if (err) console.log(`Error adding user to session: ${err}`);
+          return res.json({ _userId: userId })
+        })
 
-        return res.json({_userId: userId});
-      });
-    }
+        // create new user and push user to session users
+      } else {
+        var newUser = new User({
+          name: name,
+          role: userRole
+        })
+
+        newUser.save(function (err) {
+          if (err) console.error();
+        })
+
+        sessions.users.push(newUser);
+
+        sessions.save(function (err) {
+          if (err) console.error();
+
+          return res.json({ _userId: newUser._id });
+        });
+      }
+    })
   })
 })
 
 // catch 404 and forward to error handler
-app.use(function(req, res, next) {
+app.use(function (req, res, next) {
   next(createError(404));
 });
 
 // error handler
-app.use(function(err, req, res, next) {
+app.use(function (err, req, res, next) {
   // set locals, only providing error in development
   res.locals.message = err.message;
   res.locals.error = req.app.get('env') === 'development' ? err : {};

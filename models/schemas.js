@@ -2,9 +2,6 @@ var mongoose = require('mongoose');
 var shortid = require('shortid');
 
 var userSchema = new mongoose.Schema({
-    id: {
-        type: String
-    },
     name: {
         type: String,
         required: true
@@ -29,3 +26,4 @@ var sessionSchema = new mongoose.Schema({
 
 //Export model
 module.exports = mongoose.model('Session', sessionSchema);
+module.exports = mongoose.model('User', userSchema);
