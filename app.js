@@ -92,12 +92,17 @@ app.put('/api/join-session/:id', function (req, res) {
     User.find({}, function (err, users) {
       if (err) console.error();
 
-      // if user Id exists already (moderator), just update user role
+      // if user Id exists already (moderator), just update user role in BOTH user and session models
       if ((i = userExists(users, userId)) != -1) {
 
         users[i].role = userRole;
+        sessions.users[userExists(sessions.users, userId)].role = userRole;
 
-        users[i].save(function (err) {
+        sessions.save((err) => {
+          if (err) console.error(`Error updating user role in session: ${err}`);
+        }) 
+
+        users[i].save((err) => {
           if (err) console.error(`Error updating user role: ${err}`);
 
           return res.json({ _userId: userId })
