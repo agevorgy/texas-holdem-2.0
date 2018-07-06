@@ -13,9 +13,20 @@ var app = express();
 var port = process.env.PORT || 3005;
 var database = process.env.DATABASE;
 
+var http = require('http');
+var server = http.createServer(app);
+var io = require('socket.io').listen(server);
+
+io.on('connection', (socket) => {
+  console.log('Connected');
+  socket.on('join', function(data) {
+    console.log(data);
+  })
+})
+
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
-app.use(cors())
+app.use(cors());
 
 app.use((req, res, next) => {
   if (req.method === 'OPTIONS') {
@@ -42,7 +53,7 @@ app.get('/getUsers', function (req, res) {
 
     return res.send(sessions);
   });
-})
+});
 
 app.post('/api/create-session', function (req, res) {
   var newUser = new User({
@@ -92,12 +103,17 @@ app.put('/api/join-session/:id', function (req, res) {
     User.find({}, function (err, users) {
       if (err) console.error();
 
-      // if user Id exists already (moderator), just update user role
+      // if user Id exists already (moderator), just update user role in BOTH user and session models
       if ((i = userExists(users, userId)) != -1) {
 
         users[i].role = userRole;
+        sessions.users[userExists(sessions.users, userId)].role = userRole;
 
-        users[i].save(function (err) {
+        sessions.save((err) => {
+          if (err) console.error(`Error updating user role in session: ${err}`);
+        }) 
+
+        users[i].save((err) => {
           if (err) console.error(`Error updating user role: ${err}`);
 
           return res.json({ _userId: userId })
@@ -125,6 +141,11 @@ app.put('/api/join-session/:id', function (req, res) {
     })
   })
 })
+
+server.listen(3005, function () {
+  console.log('listening on 3005')
+});
+io.listen(server);
 
 app.use(function (req, res, next) {
   next(createError(404));
