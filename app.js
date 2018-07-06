@@ -112,7 +112,7 @@ app.put('/api/join-session/:id', function (req, res) {
         sessions.save((err) => {
           if (err) console.error(`Error updating user role in session: ${err}`);
         }) 
-
+        
         users[i].save((err) => {
           if (err) console.error(`Error updating user role: ${err}`);
 
