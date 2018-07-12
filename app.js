@@ -13,8 +13,7 @@ var app = express();
 var port = process.env.PORT || 3005;
 var database = process.env.DATABASE;
 
-var http = require('http');
-var server = http.createServer(app);
+var server = app.listen(3005);
 var io = require('socket.io').listen(server);
 
 io.on('connection', (socket) => {
