@@ -118,6 +118,23 @@ io.on('connection', (socket) => {
 			})
 		})
 	})
+
+	socket.on('set-cards-up', (sessionId) => {
+		Session.findOne( { id: sessionId }, (err, session) => {
+			if (err) console.error(err);
+
+			if (session.state == null) {
+				session.state = true
+			} else if (session.state == false) {
+				session.state = true
+			} else {
+				session.state = false
+			}
+
+			socket.emit('flip-cards', session.state);
+			socket.broadcast.emit('flip-cards', session.state);
+		})
+	})
   
 	// Leave session event
 	socket.on('leave', (data) => {
@@ -133,7 +150,9 @@ io.on('connection', (socket) => {
 	  })
 
 	  currSession = allUsers[data.session]
-	  delete currSession[data.user]
+	  if (currSession && currSession[data.user]) {
+	  	delete currSession[data.user]
+	  }
 	  socket.emit('user-joined', allUsers[data.session]);
 	  // Update all players
 	  socket.broadcast.emit('user-joined', allUsers[data.session]);

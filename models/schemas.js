@@ -21,6 +21,9 @@ var sessionSchema = new mongoose.Schema({
         type: String,
         'default': shortid.generate
     },
+    state: {
+        type: Boolean
+    },
     users: [userSchema]
 })
 
