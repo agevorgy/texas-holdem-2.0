@@ -81,7 +81,6 @@ io.on('connection', (socket) => {
   
 	// Leave session event
 	socket.on('leave', (data) => {
-
 	  User.deleteOne({ _id: data.user }, (err) => {
 		if (err) console.error(err);
 	  });
@@ -92,6 +91,12 @@ io.on('connection', (socket) => {
 		sessions.users.splice(sessions.users.indexOf(data.user), 1);
 		sessions.save();
 	  })
+
+	  currSession = allUsers[data.session]
+	  delete currSession[data.user]
+	  socket.emit('user-joined', allUsers[data.session]);
+	  // Update all players
+	  socket.broadcast.emit('user-joined', allUsers[data.session]);
 	})
 	
 	// Disconnect event 
