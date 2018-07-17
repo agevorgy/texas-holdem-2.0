@@ -32,28 +32,29 @@ io.on('connection', (socket) => {
 		if (err) console.error(`Error joining session ${user.sessionId}: ${err}`);
   
 		User.find({}, function (err, users) {
-			if (err) console.error(err);
-
+			if (err) console.error();
+	
+			i = userExists(users, user.userId);
 			users[i].role = user.role;
 			sessions.users[userExists(sessions.users, user.userId)].role = user.role;
 			
 			sessions.save((err) => {
-				if (err) console.error(`Error updating user role in session: ${err}`);
+			  if (err) console.error(`Error updating user role in session: ${err}`);
 			}) 
-
+	
 			users[i].save((err) => {
-				if (err) console.error(`Error updating user role: ${err}`);
+			  if (err) console.error(`Error updating user role: ${err}`);
 			})
-
+  
 			currUser = {"moderator": true, "name": user.name, "role": user.role};
 			curr[user.userId] = currUser;
-
+  
 			if (user.sessionId in allUsers) {
-				_.merge(allUsers[user.sessionId], curr);
+			  _.merge(allUsers[user.sessionId], curr);
 			} else {
-				allUsers[user.sessionId] = curr;   
+			  allUsers[user.sessionId] = curr;   
 			}
-
+  
 			socket.emit('user-joined', allUsers[user.sessionId]);
 		})
 	  }) 
@@ -84,7 +85,7 @@ io.on('connection', (socket) => {
 	  User.deleteOne({ _id: data.user }, (err) => {
 		if (err) console.error(err);
 	  });
-	  
+
 	  Session.findOne( { id: data.session }, (err, sessions) => {
 		if (err) console.error(err);
 		
