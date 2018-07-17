@@ -10,6 +10,7 @@ var _ = require('lodash');
  */
 
 let allUsers = {};
+let allCards = {};
 
 // Returns positive int if user exists
 function userExists(userArray, id) {
@@ -25,7 +26,6 @@ var ioEvents = io =>
 io.on('connection', (socket) => {
 	// Join session event for moderator
 	socket.on('join', (user) => {
-	  let currUser = {};
 	  let curr = {};
   
 	  Session.findOne( {id: user.sessionId}, (err, sessions) => {
@@ -46,8 +46,7 @@ io.on('connection', (socket) => {
 			  if (err) console.error(`Error updating user role: ${err}`);
 			})
   
-			currUser = {"moderator": true, "name": user.name, "role": user.role};
-			curr[user.userId] = currUser;
+			curr[user.userId] = {"moderator": true, "name": user.name, "role": user.role};
   
 			if (user.sessionId in allUsers) {
 			  _.merge(allUsers[user.sessionId], curr);
@@ -77,6 +76,47 @@ io.on('connection', (socket) => {
 		socket.emit('user-joined', allUsers[user.sessionId]);
 		// Update all players
 		socket.broadcast.emit('user-joined', allUsers[user.sessionId]);
+	})
+
+	// Select card event
+	socket.on('set-card', (data) => {
+		let curr = {}
+
+		Session.findOne( { id: data.session }, (err, session) => {
+			if (err) console.error(err);
+
+			User.find({}, function (err, users) {
+				if (err) console.error();
+		
+				i = userExists(users, data.user);
+				users[i].card = data.card;
+				session.users[userExists(session.users, data.user)].card = data.card;
+				
+				session.save((err) => {
+				  if (err) console.error(`Error updating user role in session: ${err}`);
+				}) 
+				users[i].save((err) => {
+				  if (err) console.error(`Error updating user role: ${err}`);
+				})
+
+				// if user de-selects card
+				if (data.card == null) {
+					currSession = allCards[data.session]
+					delete currSession[data.user]
+				} else {
+					curr[data.user] = {card: data.card}
+
+					if (data.session in allCards) {
+						_.merge(allCards[data.session], curr);
+					} else {
+						allCards[data.session] = curr;   
+					}
+				}
+	  
+				socket.emit('watch-submit-card', allCards[data.session]);
+				socket.broadcast.emit('watch-submit-card', allCards[data.session]);
+			})
+		})
 	})
   
 	// Leave session event

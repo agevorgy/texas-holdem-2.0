@@ -6,9 +6,9 @@ var userSchema = new mongoose.Schema({
         type: String,
         required: true
     },
-    score: {
+    card: {
         type: String,
-        enum: ['', '1', '2', '3', '5', '8', '13', '?']
+        enum: [null, '1', '2', '3', '5', '8', '13', '?']
     },
     role: {
         type: String,
