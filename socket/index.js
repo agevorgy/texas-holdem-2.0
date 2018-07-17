@@ -76,6 +76,8 @@ io.on('connection', (socket) => {
 		socket.emit('user-joined', allUsers[user.sessionId]);
 		// Update all players
 		socket.broadcast.emit('user-joined', allUsers[user.sessionId]);
+		// Check if any cards were selected before user joined
+		socket.emit('watch-submit-card', allCards[user.sessionId]);
 	})
 
 	// Select card event
@@ -133,7 +135,21 @@ io.on('connection', (socket) => {
 
 			socket.emit('flip-cards', session.state);
 			socket.broadcast.emit('flip-cards', session.state);
-		})
+		});
+	});
+
+	socket.on('reset-game', (sessionId) => {
+		Session.findOne( { id: sessionId }, (err, session) => {
+			if (err) console.error(err);
+
+			session.state = null;
+			delete allCards[sessionId]
+
+			socket.emit('flip-cards', session.state);
+			socket.broadcast.emit('flip-cards', session.state);
+			socket.emit('watch-submit-card', {});
+			socket.broadcast.emit('watch-submit-card', {});
+		});
 	})
   
 	// Leave session event
@@ -142,12 +158,11 @@ io.on('connection', (socket) => {
 		if (err) console.error(err);
 	  });
 
-	  Session.findOne( { id: data.session }, (err, sessions) => {
-		if (err) console.error(err);
-		
-		sessions.users.splice(sessions.users.indexOf(data.user), 1);
-		sessions.save();
-	  })
+	  Session.update( 
+		{ id: data.session },
+		{ $pull: { users : { _id : data.user } } },
+		{ safe: true },
+		(err, obj)  => {});
 
 	  currSession = allUsers[data.session]
 	  if (currSession && currSession[data.user]) {
