@@ -55,6 +55,7 @@ io.on('connection', (socket) => {
 			}
   
 			socket.emit('user-joined', allUsers[user.sessionId]);
+			socket.join(user.sessionId);
 		})
 	  }) 
 	});
@@ -72,10 +73,13 @@ io.on('connection', (socket) => {
 		} else {
 			allUsers[user.sessionId] = curr;   
 		}
+
+		socket.join(user.sessionId);
 		// Update current player
 		socket.emit('user-joined', allUsers[user.sessionId]);
 		// Update all players
-		socket.broadcast.emit('user-joined', allUsers[user.sessionId]);
+		socket.broadcast.to(user.sessionId).emit('user-joined', allUsers[user.sessionId]);
+		//socket.broadcast.emit('user-joined', allUsers[user.sessionId]);
 		// Check if any cards were selected before user joined
 		socket.emit('watch-submit-card', allCards[user.sessionId]);
 	})
@@ -116,7 +120,7 @@ io.on('connection', (socket) => {
 				}
 	  
 				socket.emit('watch-submit-card', allCards[data.session]);
-				socket.broadcast.emit('watch-submit-card', allCards[data.session]);
+				socket.broadcast.to(data.session).emit('watch-submit-card', allCards[data.session]);
 			})
 		})
 	})
@@ -134,7 +138,7 @@ io.on('connection', (socket) => {
 			}
 
 			socket.emit('flip-cards', session.state);
-			socket.broadcast.emit('flip-cards', session.state);
+			socket.broadcast.to(sessionId).emit('flip-cards', session.state);
 		});
 	});
 
@@ -146,9 +150,9 @@ io.on('connection', (socket) => {
 			delete allCards[sessionId]
 
 			socket.emit('flip-cards', session.state);
-			socket.broadcast.emit('flip-cards', session.state);
+			socket.broadcast.to(sessionId).emit('flip-cards', session.state);
 			socket.emit('watch-submit-card', {});
-			socket.broadcast.emit('watch-submit-card', {});
+			socket.broadcast.to(sessionId).emit('watch-submit-card', {});
 		});
 	})
   
@@ -168,9 +172,11 @@ io.on('connection', (socket) => {
 	  if (currSession && currSession[data.user]) {
 	  	delete currSession[data.user]
 	  }
+
+	  socket.leave(data.session);
 	  socket.emit('user-joined', allUsers[data.session]);
 	  // Update all players
-	  socket.broadcast.emit('user-joined', allUsers[data.session]);
+	  socket.broadcast.to(data.session).emit('user-joined', allUsers[data.session]);
 	})
 	
 	// Disconnect event 
