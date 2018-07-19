@@ -79,7 +79,6 @@ io.on('connection', (socket) => {
 		socket.emit('user-joined', allUsers[user.sessionId]);
 		// Update all players
 		socket.broadcast.to(user.sessionId).emit('user-joined', allUsers[user.sessionId]);
-		//socket.broadcast.emit('user-joined', allUsers[user.sessionId]);
 		// Check if any cards were selected before user joined
 		socket.emit('watch-submit-card', allCards[user.sessionId]);
 	})
@@ -90,39 +89,44 @@ io.on('connection', (socket) => {
 
 		Session.findOne( { id: data.session }, (err, session) => {
 			if (err) console.error(err);
+			
+			// If cards have been flipped, prohibit changing card selection
+			if (session.state != true) {
 
-			User.find({}, function (err, users) {
-				if (err) console.error();
-		
-				i = userExists(users, data.user);
-				users[i].card = data.card;
-				session.users[userExists(session.users, data.user)].card = data.card;
-				
-				session.save((err) => {
-				  if (err) console.error(`Error updating user role in session: ${err}`);
-				}) 
-				users[i].save((err) => {
-				  if (err) console.error(`Error updating user role: ${err}`);
-				})
+				User.find({}, function (err, users) {
+					if (err) console.error();
+			
+					i = userExists(users, data.user);
+					users[i].card = data.card;
+					session.users[userExists(session.users, data.user)].card = data.card;
+					
+					session.save((err) => {
+					if (err) console.error(`Error updating user role in session: ${err}`);
+					}) 
+					users[i].save((err) => {
+					if (err) console.error(`Error updating user role: ${err}`);
+					})
 
-				// if user de-selects card
-				if (data.card == null) {
-					currSession = allCards[data.session]
-					delete currSession[data.user]
-				} else {
-					curr[data.user] = {card: data.card}
-
-					if (data.session in allCards) {
-						_.merge(allCards[data.session], curr);
+					// if user de-selects card
+					if (data.card == null) {
+						currSession = allCards[data.session]
+						delete currSession[data.user]
 					} else {
-						allCards[data.session] = curr;   
+						curr[data.user] = {card: data.card}
+
+						if (data.session in allCards) {
+							_.merge(allCards[data.session], curr);
+						} else {
+							allCards[data.session] = curr;   
+						}
 					}
-				}
-	  
-				socket.emit('watch-submit-card', allCards[data.session]);
-				socket.broadcast.to(data.session).emit('watch-submit-card', allCards[data.session]);
-			})
+		
+					socket.emit('watch-submit-card', allCards[data.session]);
+					socket.broadcast.to(data.session).emit('watch-submit-card', allCards[data.session]);
+				})
+		}
 		})
+		
 	})
 
 	socket.on('set-cards-up', (sessionId) => {
@@ -136,6 +140,7 @@ io.on('connection', (socket) => {
 			} else {
 				session.state = false
 			}
+			session.save();
 
 			socket.emit('flip-cards', session.state);
 			socket.broadcast.to(sessionId).emit('flip-cards', session.state);
@@ -168,16 +173,15 @@ io.on('connection', (socket) => {
 		  { safe: true },
 		  (err, obj)  => {});
 		  
-	 // Delete user from session
-	  currSession = allUsers[data.session]
-	  if (currSession && currSession[data.user]) {
-	  	delete currSession[data.user]
+		// Delete user from session
+		currSession = allUsers[data.session]
+		// delete user's card
+		curr = allCards[data.session]
+	  if (data) {
+		  delete currSession[data.user]
+		  delete curr[data.user]
 	  }
-
-	  // Delete user's card
-	  curr = allCards[data.session]
-	  delete curr[data.user]
-
+	  
 	  socket.broadcast.to(data.session).emit('watch-submit-card', allCards[data.session]);
 	  socket.leave(data.session);
 	  socket.emit('user-joined', allUsers[data.session]);
