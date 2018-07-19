@@ -163,16 +163,22 @@ io.on('connection', (socket) => {
 	  });
 
 	  Session.update( 
-		{ id: data.session },
-		{ $pull: { users : { _id : data.user } } },
-		{ safe: true },
-		(err, obj)  => {});
-
+		  { id: data.session },
+		  { $pull: { users : { _id : data.user } } },
+		  { safe: true },
+		  (err, obj)  => {});
+		  
+	 // Delete user from session
 	  currSession = allUsers[data.session]
 	  if (currSession && currSession[data.user]) {
 	  	delete currSession[data.user]
 	  }
 
+	  // Delete user's card
+	  curr = allCards[data.session]
+	  delete curr[data.user]
+
+	  socket.broadcast.to(data.session).emit('watch-submit-card', allCards[data.session]);
 	  socket.leave(data.session);
 	  socket.emit('user-joined', allUsers[data.session]);
 	  // Update all players
