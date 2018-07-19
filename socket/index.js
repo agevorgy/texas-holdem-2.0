@@ -1,8 +1,8 @@
 require('../models/schemas');
-var mongoose = require('mongoose');
+const mongoose = require('mongoose');
 const Session = mongoose.model('Session');
 const User = mongoose.model('User');
-var _ = require('lodash');
+const _ = require('lodash');
 
 /**
  * Encapsulates all code for emitting and listening to socket events
@@ -22,7 +22,7 @@ function userExists(userArray, id) {
   return -1;
 }
 
-var ioEvents = io => 
+const ioEvents = io => 
 io.on('connection', (socket) => {
 	// Join session event for moderator
 	socket.on('join', (user) => {
@@ -124,7 +124,7 @@ io.on('connection', (socket) => {
 					socket.emit('watch-submit-card', allCards[data.session]);
 					socket.broadcast.to(data.session).emit('watch-submit-card', allCards[data.session]);
 				})
-		}
+			}
 		})
 		
 	})
@@ -152,6 +152,8 @@ io.on('connection', (socket) => {
 			if (err) console.error(err);
 
 			session.state = null;
+			session.save();
+
 			delete allCards[sessionId]
 
 			socket.emit('flip-cards', session.state);
