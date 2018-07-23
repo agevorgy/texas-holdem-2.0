@@ -1,20 +1,21 @@
 require('dotenv').config();
-var express = require('express');
-var bodyParser = require('body-parser');
-var mongoose = require('mongoose');
-var cors = require('cors');
+const express = require('express');
+const bodyParser = require('body-parser');
+const mongoose = require('mongoose');
+const cors = require('cors');
+const createError = require('http-errors');
 
-var app = express();
-var port = process.env.PORT || 3005;
-var database = process.env.DATABASE;
+const app = express();
+const port = process.env.PORT || 3005;
+const database = process.env.DATABASE;
 
-var routes = require('./routes');
-
-var server = app.listen(port);
-var io = require('socket.io').listen(server);
-var ioEvents = require('./socket');
+const server = app.listen(port);
+const io = require('socket.io').listen(server);
+const ioEvents = require('./socket');
 // Socket middleware
 ioEvents(io);
+
+const routes = require('./routes');
 
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
@@ -24,8 +25,7 @@ app.use(cors());
 app.use((req, res, next) => {
   if (req.method === 'OPTIONS') {
     res.send(200);
-  }
-  else {
+  } else {
     next();
   }
 });
@@ -36,18 +36,18 @@ app.get('/', (req, res) => res.status(200).send('Hello world!'));
 app.use('/', routes);
 
 mongoose.connect(database);
-var db = mongoose.connection;
+const db = mongoose.connection;
 db.on('error', console.error.bind(console, 'connection error:'));
-db.once('open', function () {
+db.once('open', () => {
   console.log('we are connected to mongoDB!');
 });
 
-app.use(function (req, res, next) {
+app.use((req, res, next) => {
   next(createError(404));
 });
 
 // error handler
-app.use(function (err, req, res, next) {
+app.use((err, req, res) => {
   res.locals.message = err.message;
   res.locals.error = req.app.get('env') === 'development' ? err : {};
 

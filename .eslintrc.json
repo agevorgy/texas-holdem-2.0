@@ -1,0 +1,11 @@
+{
+    "extends": "airbnb-base",
+    "rules": {
+        "indent": [
+            "error",
+            2
+        ],
+        "no-param-reassign": "off",
+        "no-underscore-dangle": "off"
+    }
+}
