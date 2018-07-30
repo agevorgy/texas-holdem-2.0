@@ -27,8 +27,8 @@ router.post('/api/create-session', (req, res) => {
     if (err) console.error(`Error creating new session: ${err}`);
 
     return res.json({
-      _sessionId: newSession.id,
-      _userId: newUser._id,
+      sessionId: newSession.id,
+      userId: newUser._id,
     });
   });
 });
@@ -70,7 +70,7 @@ router.put('/api/join-session/:id', (req, res) => {
         users[i].save((errors) => {
           if (errors) console.error(`Error updating user role: ${errors}`);
 
-          return res.json({ _userId: userId });
+          return res.json({ userId: userId });
         });
 
         // create new user and push user to session users
@@ -89,7 +89,7 @@ router.put('/api/join-session/:id', (req, res) => {
         sessions.save((errors) => {
           if (errors) console.error(`Error adding new user to session: ${errors}`);
 
-          return res.json({ _userId: newUser._id });
+          return res.json({ userId: newUser._id });
         });
       }
     });

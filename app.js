@@ -7,7 +7,7 @@ const createError = require('http-errors');
 
 const app = express();
 const port = process.env.PORT || 3005;
-const database = process.env.DATABASE;
+const database = process.env.MONGODB_URI;
 
 const server = app.listen(port);
 const io = require('socket.io').listen(server);
