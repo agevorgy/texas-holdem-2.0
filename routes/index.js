@@ -1,10 +1,14 @@
 const express = require('express');
 const mongoose = require('mongoose');
 require('../models/schemas');
+console.log('beginning');
 
 const router = express.Router();
+console.log('after express');
 const Session = mongoose.model('Session');
+console.log('after session');
 const User = mongoose.model('User');
+console.log('after user');
 
 // Create session
 router.post('/api/create-session', (req, res) => {
