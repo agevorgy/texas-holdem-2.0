@@ -2,7 +2,6 @@ require('dotenv').config();
 const express = require('express');
 const bodyParser = require('body-parser');
 const mongoose = require('mongoose');
-const cors = require('cors');
 const createError = require('http-errors');
 
 const app = express();
@@ -19,16 +18,6 @@ const routes = require('./routes');
 
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
-
-// Handling CORS
-// app.use(cors());
-// app.use((req, res, next) => {
-//   if (req.method === 'OPTIONS') {
-//     res.send(200);
-//   } else {
-//     next();
-//   }
-// });
 
 app.set('view engine', 'html');
 
